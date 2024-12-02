@@ -18,7 +18,7 @@ jobs:
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
-          key: ${{ secrets.AWS_SHH_KEY }}
+          key: ${{ secrets.AWS_SSH_KEY }}
           source: "."
           target: "~/my-website"
 
@@ -27,7 +27,7 @@ jobs:
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
-          key: ${{ secrets.AWS_SHH_KEY }}
+          key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             sudo systemctl start docker
             sudo systemctl enable docker
@@ -37,7 +37,7 @@ jobs:
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
-          key: ${{ secrets.AWS_SHH_KEY }}
+          key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             cd ~/my-website
             docker-compose up --build -d
