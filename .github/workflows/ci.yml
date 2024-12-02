@@ -1,47 +1,34 @@
-name: Deploy Nginx to EC2
+name: Deploy to EC2
 
 on:
   push:
     branches:
-      - main 
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@v0.1.8
-      with:
-        host: ${{ secrets.AWS_EC2_HOST }}
-        username: ${{ secrets.AWS_EC2_USER }}
-        key: ${{ secrets.AWS_SSH_KEY }}
-        port: 22
-        script: |
-          # Instalar Docker si no está instalado
-          if ! command -v docker &> /dev/null
-          then
-            sudo yum update -y
-            sudo amazon-linux-extras install docker -y
-            sudo service docker start
-            sudo usermod -a -G docker $USER
-          fi
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "."
+          target: "~/my-website"
 
-          # Crear directorio de despliegue
-          mkdir -p ~/deploy
 
-          # Subir archivos
-          scp -o StrictHostKeyChecking=no Dockerfile index.html ${{ secrets.AWS_EC2_USER }}@${{ secrets.AWS_EC2_HOST }}:~/deploy
-
-          # Construir y ejecutar la imagen de Docker
-          ssh ${{ secrets.AWS_EC2_USER }}@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-            cd ~/deploy
-            docker build -t simple-nginx .
-            docker stop simple-nginx || true
-            docker rm simple-nginx || true
-            docker run -d --name simple-nginx -p 80:80 simple-nginx
-          EOF
-
+      - name: Deploy with Docker Compose
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd ~/my-website
+            docker-compose up --build -d
