@@ -1,0 +1,40 @@
+name: Deploy Nginx to EC2
+
+on:
+  push:
+    branches:
+      - main 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.AWS_EC2_HOST }}
+        username: ${{ secrets.AWS_EC2_USER }}
+        key: ${{ secrets.AWS_SSH_KEY }}
+        port: 22
+        script: |
+          # Crear directorio de despliegue
+          mkdir -p ~/deploy
+          
+          # Copiar los archivos necesarios
+          echo "${{ secrets.AWS_SSH_KEY }}" > ~/deploy/id_rsa
+          chmod 600 ~/deploy/id_rsa
+
+          # Subir archivos
+          rm -rf ~/deploy/*
+          scp -o StrictHostKeyChecking=no -i ~/deploy/id_rsa Dockerfile index.html ${{ secrets.AWS_EC2_USER }}@$SSH_HOST:~/deploy
+
+          # Construir y ejecutar la imagen de Docker
+          cd ~/deploy
+          docker build -t simple-nginx .
+          docker stop simple-nginx || true
+          docker rm simple-nginx || true
+          docker run -d --name simple-nginx -p 80:80 simple-nginx
