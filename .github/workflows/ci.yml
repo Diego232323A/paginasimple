@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Copy files to EC2
-        uses: appleboy/scp-action@v0.1.8
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -23,7 +23,7 @@ jobs:
           target: "~/my-website"
 
       - name: Install Docker Compose
-        uses: appleboy/ssh-action@v0.1.8
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
@@ -34,7 +34,7 @@ jobs:
             docker-compose --version
 
       - name: Deploy with Docker Compose
-        uses: appleboy/ssh-action@v0.1.8
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
