@@ -21,20 +21,27 @@ jobs:
         key: ${{ secrets.AWS_SSH_KEY }}
         port: 22
         script: |
+          # Instalar Docker si no está instalado
+          if ! command -v docker &> /dev/null
+          then
+            sudo yum update -y
+            sudo amazon-linux-extras install docker -y
+            sudo service docker start
+            sudo usermod -a -G docker $USER
+          fi
+
           # Crear directorio de despliegue
           mkdir -p ~/deploy
-          
-          # Copiar los archivos necesarios
-          echo "${{ secrets.AWS_SSH_KEY }}" > ~/deploy/id_rsa
-          chmod 600 ~/deploy/id_rsa
 
           # Subir archivos
-          rm -rf ~/deploy/*
-          scp -o StrictHostKeyChecking=no -i ~/deploy/id_rsa Dockerfile index.html ${{ secrets.AWS_EC2_USER }}@$SSH_HOST:~/deploy
+          scp -o StrictHostKeyChecking=no Dockerfile index.html ${{ secrets.AWS_EC2_USER }}@${{ secrets.AWS_EC2_HOST }}:~/deploy
 
           # Construir y ejecutar la imagen de Docker
-          cd ~/deploy
-          docker build -t simple-nginx .
-          docker stop simple-nginx || true
-          docker rm simple-nginx || true
-          docker run -d --name simple-nginx -p 80:80 simple-nginx
+          ssh ${{ secrets.AWS_EC2_USER }}@${{ secrets.AWS_EC2_HOST }} << 'EOF'
+            cd ~/deploy
+            docker build -t simple-nginx .
+            docker stop simple-nginx || true
+            docker rm simple-nginx || true
+            docker run -d --name simple-nginx -p 80:80 simple-nginx
+          EOF
+
